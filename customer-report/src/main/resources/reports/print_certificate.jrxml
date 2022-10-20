@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="print_certificate" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="2a5ae78e-db78-42ed-a2ce-15ca00ab9a02">
+	<property name="ireport.zoom" value="1.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<parameter name="_customerIds" class="java.util.List">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<queryString>
+		<![CDATA[select x.custcode,x.ccline2 Name,x.cssocialsecno CIVIL_ID,y.co_id CONTRACT_ID,trunc(y.cs_activ_date) contr_date,
+y.dn_num MSISDN,name Nationality,cscurbalance from (
+select a.customer_id,a.custcode,a.customer_id_high,a.paymntresp,a.lbc_date,a.cscurbalance,b.cssocialsecno,b.ccline2,b.ccline3,b.ccline4,c.name
+from customer_all a,ccontact_all b,country c
+where a.customer_id = b.customer_id and b.ccbill is not null
+and b.csnationality = c.country_id
+) x,wtk_custall y
+where x.customer_id = y.customer_id
+and $X{IN,x.customer_id,_customerIds}
+and rownum < 2]]>
+	</queryString>
+	<field name="CUSTCODE" class="java.lang.String"/>
+	<field name="NAME" class="java.lang.String"/>
+	<field name="CIVIL_ID" class="java.lang.String"/>
+	<field name="CONTRACT_ID" class="java.math.BigDecimal"/>
+	<field name="CONTR_DATE" class="java.sql.Timestamp"/>
+	<field name="MSISDN" class="java.lang.String"/>
+	<field name="NATIONALITY" class="java.lang.String"/>
+	<field name="CSCURBALANCE" class="java.lang.Double"/>
+	<group name="GROUP_CUSTCODE">
+		<groupExpression><![CDATA[$F{CUSTCODE}]]></groupExpression>
+		<groupHeader>
+			<band height="177">
+				<staticText>
+					<reportElement x="186" y="130" width="183" height="20" uuid="29f88b05-fd8b-4401-9e7d-3e732a3ca17d"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle" markup="none">
+						<font fontName="Times New Roman (AR)" size="14" isBold="false" isUnderline="true" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+					</textElement>
+					<text><![CDATA[شهادة لمن يهمم الامر]]></text>
+				</staticText>
+				<image>
+					<reportElement positionType="Float" x="184" y="32" width="213" height="42" isPrintWhenDetailOverflows="true" printWhenGroupChanges="GROUP_CUSTCODE" uuid="1c7a3e43-7962-49f5-9e59-a2bdf796040d"/>
+					<imageExpression><![CDATA[this.getClass().getResourceAsStream("/images/ooredoo_logo.jpg")]]></imageExpression>
+				</image>
+				<textField pattern="dd-MMM-yy">
+					<reportElement x="227" y="91" width="100" height="20" uuid="79f19162-215d-4271-91ba-cc6d8cb40aa1"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font fontName="Times New Roman (AR)"/>
+					</textElement>
+					<textFieldExpression><![CDATA[new java.util.Date()]]></textFieldExpression>
+				</textField>
+			</band>
+		</groupHeader>
+		<groupFooter>
+			<band height="201">
+				<staticText>
+					<reportElement x="186" y="11" width="317" height="20" uuid="c1e8b5ca-3a3a-4f91-8ba6-5c91d3cd6c49"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle" markup="none">
+						<font fontName="Times New Roman (AR)" isBold="false" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+					</textElement>
+					<text><![CDATA[تشهد الشركة الوطنية للاتصلات بان العميل المذكور اعلاة  من ضمن قائمة المدينين للشركة بمبلغ]]></text>
+				</staticText>
+				<textField>
+					<reportElement x="101" y="11" width="85" height="20" uuid="c28fb82d-2d48-4364-84a9-921e21e617f3"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font fontName="Times New Roman (AR)"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{CSCURBALANCE}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement x="5" y="11" width="96" height="20" uuid="c4d0b89f-6bb5-4cf2-b77f-56bdd5597a7d"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle" markup="none">
+						<font fontName="Times New Roman (AR)" isBold="false" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+					</textElement>
+					<text><![CDATA[دينار كويتي]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="187" y="45" width="317" height="20" uuid="75d63bfb-6dc0-4cd4-8060-e9dd274b1fcd"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle" markup="none">
+						<font fontName="Times New Roman (AR)" isBold="false" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+					</textElement>
+					<text><![CDATA[وقد اعطيت لة هذه الشهادة بناء علي طلبة دون ادنى مسؤولية]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="314" y="151" width="190" height="20" uuid="0bc3223b-2443-43bb-95ae-9ecc4ed3c38a"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle" markup="none">
+						<font fontName="Times New Roman (AR)" isBold="false" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+					</textElement>
+					<text><![CDATA[هذه الشهادة صالحة لمدة شهر من تاريخه]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="51" y="151" width="190" height="20" uuid="b582d6b2-b253-4b5d-aa87-df07f1f03fe4"/>
+					<textElement verticalAlignment="Middle" markup="none">
+						<font fontName="Times New Roman (AR)" isBold="false" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+					</textElement>
+					<text><![CDATA[الشركة الوطنية للاتصلات المتنقلة]]></text>
+				</staticText>
+			</band>
+		</groupFooter>
+	</group>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<detail>
+		<band height="183" splitType="Stretch">
+			<staticText>
+				<reportElement x="426" y="45" width="64" height="20" uuid="d4d1275f-ac7f-4568-984b-2793f9e1ccfc"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle" markup="none">
+					<font fontName="Times New Roman (AR)" isBold="false" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[الاسم:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="426" y="90" width="64" height="20" uuid="59beac93-3633-459b-8337-9937485832b0"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle" markup="none">
+					<font fontName="Times New Roman (AR)" isBold="false" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[الرقم المدني:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="219" y="45" width="46" height="20" uuid="1f09db91-3efe-46b1-b81f-79fe0254abfa"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle" markup="none">
+					<font fontName="Times New Roman (AR)" isBold="false" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[رقم النقال:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="219" y="90" width="46" height="20" uuid="187ea3ed-c6ee-410f-8020-67e3e2e8cd83"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle" markup="none">
+					<font fontName="Times New Roman (AR)" isBold="false" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[رقم الحساب:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="219" y="132" width="46" height="20" uuid="ebf2be57-5d4e-46a1-ac2f-9c465217c01f"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle" markup="none">
+					<font fontName="Times New Roman (AR)" isBold="false" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[تاريخ العقد:]]></text>
+			</staticText>
+			<line>
+				<reportElement x="51" y="13" width="453" height="1" uuid="171fb59f-771d-4250-ab52-0d51f3826286"/>
+			</line>
+			<line>
+				<reportElement x="51" y="172" width="453" height="1" uuid="caacb506-56d5-4c78-a70e-d4cfbd3f3c27"/>
+			</line>
+			<line>
+				<reportElement x="51" y="14" width="1" height="159" uuid="6cd8e033-15a0-4a79-b964-2a978975b2cd"/>
+			</line>
+			<line>
+				<reportElement x="503" y="14" width="1" height="159" uuid="3d315a3f-6360-4ab6-995e-e1824def54e0"/>
+			</line>
+			<textField>
+				<reportElement x="265" y="45" width="161" height="20" uuid="d363e9b8-560c-4dc5-8ba3-a68ef3c4d656"/>
+				<box rightPadding="5"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="Times New Roman (AR)"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{NAME}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="265" y="90" width="161" height="20" uuid="1ca8775b-0d54-4d13-b8af-f8029c3f6c62"/>
+				<box rightPadding="5"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="Times New Roman (AR)"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{CIVIL_ID}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="265" y="132" width="161" height="20" uuid="26e2fa15-f94c-4c69-98ed-2fc339588018"/>
+				<box rightPadding="5"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="Times New Roman (AR)"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{NATIONALITY}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="74" y="45" width="145" height="20" uuid="6947842e-1ad1-446d-a373-b895d04b966b"/>
+				<box rightPadding="5"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="Times New Roman (AR)"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{MSISDN}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="74" y="90" width="145" height="20" uuid="59410756-b561-4576-94b4-2a5aeaed3642"/>
+				<box rightPadding="5"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="Times New Roman (AR)"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{CUSTCODE}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="74" y="132" width="145" height="20" uuid="808853ea-f6db-4938-999e-d48f6b009cd1"/>
+				<box rightPadding="5"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="Times New Roman (AR)"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{CONTR_DATE}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="426" y="132" width="64" height="20" uuid="9e2bd71f-d8e9-4b65-9ea3-015f72265208"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle" markup="none">
+					<font fontName="Times New Roman (AR)" isBold="false" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[الجنسية:]]></text>
+			</staticText>
+		</band>
+	</detail>
+	<summary>
+		<band height="42" splitType="Stretch"/>
+	</summary>
+</jasperReport>

@@ -1,0 +1,906 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="statement_of_account" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="1f92a422-d8df-47e8-812c-ba536dc82a86">
+	<property name="ireport.zoom" value="1.6105100000000023"/>
+	<property name="ireport.x" value="221"/>
+	<property name="ireport.y" value="113"/>
+	<subDataset name="DS_RECEIPTS_TXN" uuid="fd56ec07-cdec-4153-b774-d04f344535dc">
+		<parameter name="customerId" class="java.lang.String">
+			<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+		</parameter>
+		<queryString>
+			<![CDATA[select
+	ohrefnum as "Invoice #",
+	ohentdate as "Date",
+	ohduedate as "Due Date",
+	ohinvamt_gl as "Amount"
+from orderhdr_all
+where customer_id = $P{customerId}
+	and ohstatus in ('IN','CM')
+order by ohentdate]]>
+		</queryString>
+		<field name="Invoice #" class="java.lang.String"/>
+		<field name="Date" class="java.sql.Timestamp"/>
+		<field name="Due Date" class="java.sql.Timestamp"/>
+		<field name="Amount" class="java.lang.Double"/>
+		<variable name="totalReceiptAmount" class="java.math.BigDecimal" resetType="Group" resetGroup="GROUP_RECEIPT_TXN_CUSTOMERID" calculation="Sum">
+			<variableExpression><![CDATA[$F{Amount}]]></variableExpression>
+		</variable>
+		<group name="GROUP_RECEIPT_TXN_CUSTOMERID">
+			<groupExpression><![CDATA[$P{customerId}]]></groupExpression>
+		</group>
+	</subDataset>
+	<subDataset name="DS_PAYMENTS_TXN" uuid="1be71bf5-4189-43a4-b252-e552ab7658cc">
+		<parameter name="customerId" class="java.lang.String">
+			<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+		</parameter>
+		<queryString>
+			<![CDATA[select
+	caxact,cachknum,caentdate,cachkamt_gl,catype
+from cashreceipts_all
+where customer_id =  $P{customerId}
+	and catype not in (61,62) and cachkamt_gl != 0
+order by caentdate]]>
+		</queryString>
+		<field name="CAXACT" class="java.lang.Double"/>
+		<field name="CACHKNUM" class="java.lang.String"/>
+		<field name="CAENTDATE" class="java.sql.Timestamp"/>
+		<field name="CACHKAMT_GL" class="java.lang.Double"/>
+		<field name="CATYPE" class="java.lang.String"/>
+		<variable name="totalPayments" class="java.math.BigDecimal" resetType="Group" resetGroup="GROUP_PAY_CUSTOMERID" calculation="Sum">
+			<variableExpression><![CDATA[$F{CACHKAMT_GL}]]></variableExpression>
+		</variable>
+		<group name="GROUP_PAY_CUSTOMERID">
+			<groupExpression><![CDATA[$P{customerId}]]></groupExpression>
+		</group>
+	</subDataset>
+	<subDataset name="DS_OUTSTAND_BAL" uuid="646baa32-343e-4d1c-86e8-1959d06b5cc2">
+		<parameter name="customerId" class="java.lang.String">
+			<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+		</parameter>
+		<parameter name="terminationFee" class="java.math.BigDecimal">
+			<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+		</parameter>
+		<queryString>
+			<![CDATA[select (select sum(ohinvamt_gl)
+from orderhdr_all
+where customer_id = $P{customerId}
+and ohstatus in ('IN','CM'))
+ -
+(select sum(cachkamt_gl)
+from cashreceipts_all
+where customer_id =  $P{customerId}
+and catype not in (61,62) and cachkamt_gl != 0)
++
+$P{terminationFee}
+as totalOutStandBal from dual]]>
+		</queryString>
+		<field name="TOTALOUTSTANDBAL" class="java.math.BigDecimal"/>
+	</subDataset>
+	<parameter name="_customerIds" class="java.util.List">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="terminationFee" class="java.math.BigDecimal">
+		<defaultValueExpression><![CDATA[0]]></defaultValueExpression>
+	</parameter>
+	<queryString>
+		<![CDATA[select x.*,y.co_id,y.cs_activ_date,y.dn_num
+from 	(select a.customer_id,a.custcode,a.customer_id_high,
+	a.paymntresp,a.lbc_date,a.cscurbalance,
+	b.cssocialsecno,b.ccline2,b.ccline3,b.ccline4
+	from customer_all a,ccontact_all b
+	where a.customer_id = b.customer_id and b.ccbill is not null
+	) x,wtk_custall y
+where x.customer_id = y.customer_id
+and $X{IN,x.customer_id,_customerIds}]]>
+	</queryString>
+	<field name="CSCURBALANCE" class="java.lang.Double"/>
+	<field name="CUSTCODE" class="java.lang.String"/>
+	<field name="PAYMNTRESP" class="java.lang.String"/>
+	<field name="CSSOCIALSECNO" class="java.lang.String"/>
+	<field name="CCLINE2" class="java.lang.String"/>
+	<field name="CCLINE3" class="java.lang.String"/>
+	<field name="CCLINE4" class="java.lang.String"/>
+	<field name="DN_NUM" class="java.lang.String"/>
+	<field name="CUSTOMER_ID" class="java.math.BigDecimal"/>
+	<field name="CUSTOMER_ID_HIGH" class="java.math.BigDecimal"/>
+	<field name="CO_ID" class="java.math.BigDecimal"/>
+	<field name="LBC_DATE" class="java.sql.Timestamp"/>
+	<field name="CS_ACTIV_DATE" class="java.sql.Timestamp"/>
+	<group name="GROUP_CUSTOMER_ID" isStartNewPage="true">
+		<groupExpression><![CDATA[$F{CUSTOMER_ID}.toString()]]></groupExpression>
+		<groupHeader>
+			<band height="256">
+				<staticText>
+					<reportElement x="39" y="206" width="46" height="15" uuid="a118c07d-5352-4be4-a787-69e5a0322d7a"/>
+					<textElement markup="none">
+						<font fontName="Times New Roman (AR)" isBold="false" isPdfEmbedded="true"/>
+					</textElement>
+					<text><![CDATA[Address:]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="220" y="206" width="36" height="15" uuid="2f53bc53-2ec1-4a91-9f7d-80a614050af4"/>
+					<textElement textAlignment="Right" markup="none">
+						<font fontName="Times New Roman (AR)" isBold="false" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+					</textElement>
+					<text><![CDATA[العنوان]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="267" y="206" width="69" height="15" uuid="021a6f55-0eda-4759-99ab-1f8ffbedbc9f"/>
+					<textElement markup="none">
+						<font fontName="Times New Roman (AR)" isBold="false" isPdfEmbedded="true"/>
+					</textElement>
+					<text><![CDATA[Contract Id:]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="267" y="221" width="69" height="15" uuid="cffae268-aa0d-4bf0-9bb7-bb1aa4abd7b6"/>
+					<textElement markup="none">
+						<font fontName="Times New Roman (AR)" isBold="false" isPdfEmbedded="true"/>
+					</textElement>
+					<text><![CDATA[Contract date:]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="460" y="206" width="63" height="15" uuid="ccd30dfc-3a7f-44c4-bbc1-b918fa5a2212"/>
+					<textElement textAlignment="Right" markup="none">
+						<font fontName="Times New Roman (AR)" isBold="false" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+					</textElement>
+					<text><![CDATA[العقد]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="460" y="221" width="63" height="15" uuid="f83ca336-1ee5-4b65-905a-77698d8f6608"/>
+					<textElement textAlignment="Right" markup="none">
+						<font fontName="Times New Roman (AR)" isBold="false" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+					</textElement>
+					<text><![CDATA[تاريخ العقد]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="277" y="104" width="83" height="20" uuid="95822dd8-b229-44a0-81bc-3aebc2322133"/>
+					<textElement textAlignment="Right" markup="none">
+						<font fontName="Times New Roman (AR)" isBold="false" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+					</textElement>
+					<text><![CDATA[فاتورة المشترك بتاريخ ]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="39" y="158" width="46" height="15" uuid="504c2111-e884-4b42-b481-25931013c027"/>
+					<textElement markup="none">
+						<font fontName="Times New Roman (AR)" isBold="false" isPdfEmbedded="true"/>
+					</textElement>
+					<text><![CDATA[Name:]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="39" y="191" width="46" height="15" uuid="0efc3cd2-7bed-493e-b736-bdda10d3d350"/>
+					<textElement markup="none">
+						<font fontName="Times New Roman (AR)" isBold="false" isPdfEmbedded="true"/>
+					</textElement>
+					<text><![CDATA[Civil ID:]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="220" y="158" width="36" height="15" uuid="5fd5adf4-5bd6-41d0-b8b5-81870c4e424a"/>
+					<textElement textAlignment="Right" markup="none">
+						<font fontName="Times New Roman (AR)" isBold="false" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+					</textElement>
+					<text><![CDATA[الاسم]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="220" y="191" width="36" height="15" uuid="9387854a-91d9-4b71-bea5-e59c5886cb2f"/>
+					<textElement textAlignment="Right" markup="none">
+						<font fontName="Times New Roman (AR)" isBold="false" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+					</textElement>
+					<text><![CDATA[رقم المدني]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="267" y="158" width="69" height="15" uuid="55b9f870-081b-4acd-a496-b9f622b15652"/>
+					<textElement markup="none">
+						<font fontName="Times New Roman (AR)" isBold="false" isPdfEmbedded="true"/>
+					</textElement>
+					<text><![CDATA[Mobile No:]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="267" y="191" width="69" height="15" uuid="ef033edc-2f01-45f3-8282-5b006720f000"/>
+					<textElement markup="none">
+						<font fontName="Times New Roman (AR)" isBold="false" isPdfEmbedded="true"/>
+					</textElement>
+					<text><![CDATA[Account No:]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="460" y="158" width="63" height="15" uuid="d93a99fe-2e44-46fa-a4a0-db02de9f3c0f"/>
+					<textElement textAlignment="Right" markup="none">
+						<font fontName="Times New Roman (AR)" isBold="false" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+					</textElement>
+					<text><![CDATA[رقم الهاتف النقال]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="460" y="191" width="63" height="15" uuid="a39804e7-363a-4ba5-9abb-2789283c5ae1"/>
+					<textElement textAlignment="Right" markup="none">
+						<font fontName="Times New Roman (AR)" isBold="false" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+					</textElement>
+					<text><![CDATA[رقم الحساب]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="177" y="84" width="169" height="20" uuid="5204d502-7c48-4214-8755-6230f02857d5"/>
+					<textElement markup="none">
+						<font fontName="Times New Roman (AR)" isBold="false" isPdfEmbedded="true"/>
+					</textElement>
+					<text><![CDATA[STATEMENT OF ACCOUNT AS ON ]]></text>
+				</staticText>
+				<image>
+					<reportElement positionType="Float" x="174" y="22" width="213" height="42" isPrintWhenDetailOverflows="true" printWhenGroupChanges="GROUP_CUSTOMER_ID" uuid="270139b3-c819-4b61-8cd4-414d13db1e8f"/>
+					<imageExpression><![CDATA[this.getClass().getResourceAsStream("/images/ooredoo_logo.jpg")]]></imageExpression>
+				</image>
+				<textField>
+					<reportElement x="336" y="191" width="124" height="15" uuid="5c92def8-6b33-4ef4-bb01-5f8c8a3520e7"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font fontName="Times New Roman (AR)"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{CUSTCODE}]]></textFieldExpression>
+				</textField>
+				<textField>
+					<reportElement x="336" y="206" width="124" height="15" uuid="03c9023e-43fc-4f77-8bf0-a1748b2ecb17"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font fontName="Times New Roman (AR)"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{CO_ID}]]></textFieldExpression>
+				</textField>
+				<textField pattern="dd-MMM-yy">
+					<reportElement x="336" y="221" width="124" height="15" uuid="c6f214ce-c527-4400-9c8f-bee2d4c1fb1e"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font fontName="Times New Roman (AR)"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{CS_ACTIV_DATE}]]></textFieldExpression>
+				</textField>
+				<textField>
+					<reportElement x="336" y="158" width="124" height="15" uuid="b7e8f2e8-1736-4034-9928-d96bb7be675e"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font fontName="Times New Roman (AR)"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{DN_NUM}]]></textFieldExpression>
+				</textField>
+				<textField>
+					<reportElement x="85" y="158" width="135" height="15" uuid="eb43ac4f-a3ba-4245-b2b8-4727236a3b3e"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font fontName="Times New Roman (AR)"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{CCLINE2}]]></textFieldExpression>
+				</textField>
+				<textField>
+					<reportElement x="85" y="191" width="135" height="15" uuid="02c3c892-88ba-475f-a054-99b28675b620"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font fontName="Times New Roman (AR)"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{CSSOCIALSECNO}]]></textFieldExpression>
+				</textField>
+				<textField>
+					<reportElement x="85" y="206" width="135" height="15" uuid="bef40c76-1b62-48e0-b3ad-0e2abb97644f"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font fontName="Times New Roman (AR)"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{CCLINE3}]]></textFieldExpression>
+				</textField>
+				<textField>
+					<reportElement x="85" y="221" width="135" height="15" uuid="447855c1-e920-4eaf-bf43-5da7d66c610c"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font fontName="Times New Roman (AR)"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{CCLINE4}]]></textFieldExpression>
+				</textField>
+				<textField pattern="dd-MMM-yy">
+					<reportElement x="346" y="84" width="100" height="20" uuid="7681a2fc-1a54-43d1-a5be-3cc9727a240a"/>
+					<textElement>
+						<font fontName="Times New Roman (AR)" isBold="false"/>
+					</textElement>
+					<textFieldExpression><![CDATA[new java.util.Date()]]></textFieldExpression>
+				</textField>
+				<textField pattern="dd-MMM-yy">
+					<reportElement x="177" y="104" width="100" height="20" uuid="f1ca51f1-29db-4251-a357-c4afd3114426"/>
+					<textElement textAlignment="Right">
+						<font fontName="Times New Roman (AR)" isBold="false"/>
+					</textElement>
+					<textFieldExpression><![CDATA[new java.util.Date()]]></textFieldExpression>
+				</textField>
+			</band>
+		</groupHeader>
+	</group>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<pageHeader>
+		<band height="7" splitType="Stretch"/>
+	</pageHeader>
+	<columnHeader>
+		<band splitType="Stretch"/>
+	</columnHeader>
+	<detail>
+		<band height="56">
+			<componentElement>
+				<reportElement key="table" positionType="Float" x="36" y="20" width="486" height="18" isPrintWhenDetailOverflows="true" printWhenGroupChanges="GROUP_CUSTOMER_ID" uuid="a1d57ac0-ee6e-4082-bd79-aad58dc0ee00"/>
+				<jr:table xmlns:jr="http://jasperreports.sourceforge.net/jasperreports/components" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/components http://jasperreports.sourceforge.net/xsd/components.xsd" whenNoDataType="AllSectionsNoDetail">
+					<datasetRun subDataset="DS_RECEIPTS_TXN" uuid="6ccbe46d-a36b-4f00-9a76-8fb039a42c0e">
+						<datasetParameter name="customerId">
+							<datasetParameterExpression><![CDATA[$F{CUSTOMER_ID}.toString()]]></datasetParameterExpression>
+						</datasetParameter>
+						<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+					</datasetRun>
+					<jr:column width="121" uuid="d5c458dc-45a1-4506-ae75-f475280fc39e">
+						<jr:groupHeader groupName="GROUP_RECEIPT_TXN_CUSTOMERID">
+							<jr:cell height="40" rowSpan="1">
+								<staticText>
+									<reportElement x="0" y="0" width="121" height="20" uuid="4f0911b6-3fc8-4951-ac67-38590e550468"/>
+									<box>
+										<topPen lineWidth="0.5"/>
+										<leftPen lineWidth="0.5"/>
+										<bottomPen lineWidth="0.5"/>
+									</box>
+									<textElement textAlignment="Center" verticalAlignment="Middle" markup="none">
+										<font fontName="Times New Roman (AR)" isBold="false" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+									</textElement>
+									<text><![CDATA[رقم الفاتورة]]></text>
+								</staticText>
+								<staticText>
+									<reportElement x="0" y="20" width="121" height="20" uuid="c7e61bb7-def1-40cb-af41-bd988ff7d12d"/>
+									<box>
+										<topPen lineWidth="0.5"/>
+										<leftPen lineWidth="0.5"/>
+										<bottomPen lineWidth="0.5"/>
+									</box>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font fontName="Times New Roman (AR)"/>
+									</textElement>
+									<text><![CDATA[Invoice #]]></text>
+								</staticText>
+							</jr:cell>
+						</jr:groupHeader>
+						<jr:groupFooter groupName="GROUP_RECEIPT_TXN_CUSTOMERID">
+							<jr:cell height="39" rowSpan="1">
+								<staticText>
+									<reportElement mode="Opaque" x="0" y="20" width="121" height="19" backcolor="#CCCCCC" uuid="75ad1faa-0ff9-4eae-a714-d3615521fb7b"/>
+									<box>
+										<topPen lineWidth="0.5"/>
+										<leftPen lineWidth="0.5"/>
+										<bottomPen lineWidth="0.5"/>
+									</box>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font fontName="Times New Roman (AR)"/>
+									</textElement>
+									<text><![CDATA[Total Invoice]]></text>
+								</staticText>
+							</jr:cell>
+						</jr:groupFooter>
+						<jr:detailCell height="20" rowSpan="1">
+							<textField>
+								<reportElement x="0" y="0" width="121" height="20" uuid="6562974f-57e4-46c3-a00d-02aa6f48f9f2"/>
+								<box>
+									<pen lineWidth="0.5"/>
+									<topPen lineWidth="0.5"/>
+									<leftPen lineWidth="0.5"/>
+									<bottomPen lineWidth="0.5"/>
+									<rightPen lineWidth="0.5"/>
+								</box>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="Times New Roman (AR)"/>
+								</textElement>
+								<textFieldExpression><![CDATA[$F{Invoice #}]]></textFieldExpression>
+							</textField>
+						</jr:detailCell>
+					</jr:column>
+					<jr:columnGroup width="242" uuid="aef2121f-ab42-497f-9ab7-e28f75c3d47b">
+						<jr:groupFooter groupName="GROUP_RECEIPT_TXN_CUSTOMERID">
+							<jr:cell height="39" rowSpan="1">
+								<textField pattern="#,##0.000">
+									<reportElement mode="Opaque" x="0" y="20" width="242" height="19" backcolor="#CCCCCC" uuid="7ef1f883-7c96-4dad-b233-60341fb3210d"/>
+									<box>
+										<topPen lineWidth="0.5"/>
+										<bottomPen lineWidth="0.5"/>
+									</box>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font fontName="Times New Roman (AR)"/>
+									</textElement>
+									<textFieldExpression><![CDATA[$V{totalReceiptAmount}]]></textFieldExpression>
+								</textField>
+							</jr:cell>
+						</jr:groupFooter>
+						<jr:column width="121" uuid="eb2ee792-1337-46b3-ad78-21ce72ce4630">
+							<jr:groupHeader groupName="GROUP_RECEIPT_TXN_CUSTOMERID">
+								<jr:cell height="40" rowSpan="1">
+									<staticText>
+										<reportElement x="0" y="20" width="121" height="20" uuid="93ce87f2-a132-4622-a5c8-7479ec8da0bc"/>
+										<box>
+											<topPen lineWidth="0.5"/>
+											<bottomPen lineWidth="0.5"/>
+										</box>
+										<textElement textAlignment="Center" verticalAlignment="Middle">
+											<font fontName="Times New Roman (AR)"/>
+										</textElement>
+										<text><![CDATA[Date]]></text>
+									</staticText>
+									<staticText>
+										<reportElement x="0" y="0" width="121" height="20" uuid="0ef13463-ca24-4f0f-af84-151997f7c63d"/>
+										<box>
+											<topPen lineWidth="0.5"/>
+											<bottomPen lineWidth="0.5"/>
+										</box>
+										<textElement textAlignment="Center" verticalAlignment="Middle" markup="none">
+											<font fontName="Times New Roman (AR)" isBold="false" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+										</textElement>
+										<text><![CDATA[التاريخ]]></text>
+									</staticText>
+								</jr:cell>
+							</jr:groupHeader>
+							<jr:detailCell height="20" rowSpan="1">
+								<textField pattern="dd-MMM-yy">
+									<reportElement x="0" y="0" width="121" height="20" uuid="0aa5b5a9-f8c0-49d0-aac5-05034aa71688"/>
+									<box>
+										<pen lineWidth="0.5"/>
+										<topPen lineWidth="0.5"/>
+										<leftPen lineWidth="0.5"/>
+										<bottomPen lineWidth="0.5"/>
+										<rightPen lineWidth="0.5"/>
+									</box>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font fontName="Times New Roman (AR)"/>
+									</textElement>
+									<textFieldExpression><![CDATA[$F{Date}]]></textFieldExpression>
+								</textField>
+							</jr:detailCell>
+						</jr:column>
+						<jr:column width="121" uuid="b606b84c-2fd7-4ffc-ba3b-8bf288d6746e">
+							<jr:groupHeader groupName="GROUP_RECEIPT_TXN_CUSTOMERID">
+								<jr:cell height="40" rowSpan="1">
+									<staticText>
+										<reportElement x="0" y="20" width="121" height="20" uuid="674dd2eb-89cd-4401-8b65-6761666c83f3"/>
+										<box>
+											<topPen lineWidth="0.5"/>
+											<bottomPen lineWidth="0.5"/>
+										</box>
+										<textElement textAlignment="Center" verticalAlignment="Middle">
+											<font fontName="Times New Roman (AR)"/>
+										</textElement>
+										<text><![CDATA[Due Date]]></text>
+									</staticText>
+									<staticText>
+										<reportElement x="0" y="0" width="121" height="20" uuid="40b141dd-e1d5-4f2f-ad22-a510153013d5"/>
+										<box>
+											<topPen lineWidth="0.5"/>
+											<bottomPen lineWidth="0.5"/>
+										</box>
+										<textElement textAlignment="Center" verticalAlignment="Middle" markup="none">
+											<font fontName="Times New Roman (AR)" isBold="false" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+										</textElement>
+										<text><![CDATA[تاريخ الاستحقاق]]></text>
+									</staticText>
+								</jr:cell>
+							</jr:groupHeader>
+							<jr:detailCell height="20" rowSpan="1">
+								<textField pattern="dd-MMM-yy">
+									<reportElement x="0" y="0" width="121" height="20" uuid="f0f16858-7407-4369-b967-681e94519cca"/>
+									<box>
+										<pen lineWidth="0.5"/>
+										<topPen lineWidth="0.5"/>
+										<leftPen lineWidth="0.5"/>
+										<bottomPen lineWidth="0.5"/>
+										<rightPen lineWidth="0.5"/>
+									</box>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font fontName="Times New Roman (AR)"/>
+									</textElement>
+									<textFieldExpression><![CDATA[$F{Due Date}]]></textFieldExpression>
+								</textField>
+							</jr:detailCell>
+						</jr:column>
+					</jr:columnGroup>
+					<jr:column width="123" uuid="6df05cce-b478-42cd-b2e7-64ae6452ad86">
+						<jr:groupHeader groupName="GROUP_RECEIPT_TXN_CUSTOMERID">
+							<jr:cell height="40" rowSpan="1">
+								<staticText>
+									<reportElement x="0" y="20" width="123" height="20" uuid="239a09ec-98f3-48bc-92d8-9fc1d933542b"/>
+									<box>
+										<topPen lineWidth="0.5"/>
+										<bottomPen lineWidth="0.5"/>
+										<rightPen lineWidth="0.5"/>
+									</box>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font fontName="Times New Roman (AR)"/>
+									</textElement>
+									<text><![CDATA[Amount]]></text>
+								</staticText>
+								<staticText>
+									<reportElement x="0" y="0" width="123" height="20" uuid="5c28adb8-2e2b-4299-8d51-c14ae4283684"/>
+									<box>
+										<topPen lineWidth="0.5"/>
+										<bottomPen lineWidth="0.5"/>
+										<rightPen lineWidth="0.5"/>
+									</box>
+									<textElement textAlignment="Center" verticalAlignment="Middle" markup="none">
+										<font fontName="Times New Roman (AR)" isBold="false" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+									</textElement>
+									<text><![CDATA[المبلغ]]></text>
+								</staticText>
+							</jr:cell>
+						</jr:groupHeader>
+						<jr:groupFooter groupName="GROUP_RECEIPT_TXN_CUSTOMERID">
+							<jr:cell height="39" rowSpan="1">
+								<staticText>
+									<reportElement mode="Opaque" x="0" y="20" width="123" height="19" backcolor="#CCCCCC" uuid="94996a93-cfe4-4a73-a598-bbb0c82b64ed"/>
+									<box>
+										<topPen lineWidth="0.5"/>
+										<bottomPen lineWidth="0.5"/>
+										<rightPen lineWidth="0.5"/>
+									</box>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font fontName="Times New Roman (AR)"/>
+									</textElement>
+									<text><![CDATA[اجمالي الفواتير]]></text>
+								</staticText>
+							</jr:cell>
+						</jr:groupFooter>
+						<jr:detailCell height="20" rowSpan="1">
+							<textField pattern="#,##0.000">
+								<reportElement x="0" y="0" width="123" height="20" uuid="312caed3-cd5f-4224-8c52-7dd88cd852bb"/>
+								<box rightPadding="2">
+									<pen lineWidth="0.5"/>
+									<topPen lineWidth="0.5"/>
+									<leftPen lineWidth="0.5"/>
+									<bottomPen lineWidth="0.5"/>
+									<rightPen lineWidth="0.5"/>
+								</box>
+								<textElement textAlignment="Right" verticalAlignment="Middle">
+									<font fontName="Times New Roman (AR)"/>
+								</textElement>
+								<textFieldExpression><![CDATA[$F{Amount}]]></textFieldExpression>
+							</textField>
+						</jr:detailCell>
+					</jr:column>
+				</jr:table>
+			</componentElement>
+			<staticText>
+				<reportElement mode="Opaque" x="36" y="0" width="486" height="20" backcolor="#CCCCCC" uuid="fa667d96-5c11-4b33-a653-33651d68c8d0"/>
+				<box>
+					<pen lineWidth="1.0"/>
+					<topPen lineWidth="1.0"/>
+					<leftPen lineWidth="1.0"/>
+					<bottomPen lineWidth="1.0"/>
+					<rightPen lineWidth="1.0"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle" markup="none">
+					<font fontName="Times New Roman (AR)" isBold="false" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<text><![CDATA[الفواتير]]></text>
+			</staticText>
+		</band>
+		<band height="55">
+			<componentElement>
+				<reportElement key="table" positionType="Float" x="36" y="20" width="486" height="18" isPrintWhenDetailOverflows="true" printWhenGroupChanges="GROUP_CUSTOMER_ID" uuid="f3b39704-7547-4601-b8aa-e36cc1583892"/>
+				<jr:table xmlns:jr="http://jasperreports.sourceforge.net/jasperreports/components" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/components http://jasperreports.sourceforge.net/xsd/components.xsd" whenNoDataType="AllSectionsNoDetail">
+					<datasetRun subDataset="DS_PAYMENTS_TXN" uuid="0d7df1f7-6984-4094-8796-d43fe8899c90">
+						<datasetParameter name="customerId">
+							<datasetParameterExpression><![CDATA[$F{CUSTOMER_ID}.toString()]]></datasetParameterExpression>
+						</datasetParameter>
+						<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+					</datasetRun>
+					<jr:column width="161" uuid="bfe7084d-9b71-4119-bb61-a6163002b3f2">
+						<jr:groupHeader groupName="GROUP_PAY_CUSTOMERID">
+							<jr:cell height="40" rowSpan="1">
+								<staticText>
+									<reportElement x="0" y="0" width="161" height="20" uuid="ac219319-7417-4e7b-9b0e-f3060cb8f4b8"/>
+									<box>
+										<topPen lineWidth="0.5"/>
+										<leftPen lineWidth="0.5"/>
+										<bottomPen lineWidth="0.5"/>
+										<rightPen lineWidth="0.0"/>
+									</box>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font fontName="Times New Roman (AR)"/>
+									</textElement>
+									<text><![CDATA[رقم الوصل]]></text>
+								</staticText>
+								<staticText>
+									<reportElement x="0" y="20" width="161" height="20" uuid="50e1916d-6a15-464b-bb2f-13792207dee9"/>
+									<box>
+										<topPen lineWidth="0.5"/>
+										<leftPen lineWidth="0.5"/>
+										<bottomPen lineWidth="0.5"/>
+										<rightPen lineWidth="0.0"/>
+									</box>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font fontName="Times New Roman (AR)"/>
+									</textElement>
+									<text><![CDATA[Receipt No.]]></text>
+								</staticText>
+							</jr:cell>
+						</jr:groupHeader>
+						<jr:groupFooter groupName="GROUP_PAY_CUSTOMERID">
+							<jr:cell height="40" rowSpan="1">
+								<staticText>
+									<reportElement mode="Opaque" x="0" y="20" width="161" height="20" backcolor="#CCCCCC" uuid="a41cabe0-a935-4417-a006-46822f69871a"/>
+									<box>
+										<topPen lineWidth="0.5"/>
+										<leftPen lineWidth="0.5"/>
+										<bottomPen lineWidth="0.5"/>
+									</box>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font fontName="Times New Roman (AR)"/>
+									</textElement>
+									<text><![CDATA[Total Payments]]></text>
+								</staticText>
+							</jr:cell>
+						</jr:groupFooter>
+						<jr:detailCell height="20" rowSpan="1">
+							<textField>
+								<reportElement x="0" y="0" width="161" height="20" uuid="1dd0acbd-4ea2-4196-aa1e-eeb5e135a3e1"/>
+								<box>
+									<topPen lineWidth="0.5"/>
+									<leftPen lineWidth="0.5"/>
+									<bottomPen lineWidth="0.5"/>
+									<rightPen lineWidth="0.5"/>
+								</box>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="Times New Roman (AR)"/>
+								</textElement>
+								<textFieldExpression><![CDATA[$F{CACHKNUM}]]></textFieldExpression>
+							</textField>
+						</jr:detailCell>
+					</jr:column>
+					<jr:column width="161" uuid="efb6aee3-9b72-47b2-a781-766702ce83da">
+						<jr:groupHeader groupName="GROUP_PAY_CUSTOMERID">
+							<jr:cell height="40" rowSpan="1">
+								<staticText>
+									<reportElement x="0" y="0" width="161" height="20" uuid="1c3779b8-fa01-45fd-8df8-564b80a33f0b"/>
+									<box>
+										<topPen lineWidth="0.5"/>
+										<leftPen lineWidth="0.0"/>
+										<bottomPen lineWidth="0.5"/>
+										<rightPen lineWidth="0.0"/>
+									</box>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font fontName="Times New Roman (AR)"/>
+									</textElement>
+									<text><![CDATA[التاريخ الوصل]]></text>
+								</staticText>
+								<staticText>
+									<reportElement x="0" y="20" width="161" height="20" uuid="6febe24d-52be-46ce-9380-8a3e1f1f7c62"/>
+									<box>
+										<topPen lineWidth="0.5"/>
+										<leftPen lineWidth="0.0"/>
+										<bottomPen lineWidth="0.5"/>
+										<rightPen lineWidth="0.0"/>
+									</box>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font fontName="Times New Roman (AR)"/>
+									</textElement>
+									<text><![CDATA[Receipt Date]]></text>
+								</staticText>
+							</jr:cell>
+						</jr:groupHeader>
+						<jr:groupFooter groupName="GROUP_PAY_CUSTOMERID">
+							<jr:cell height="40" rowSpan="1">
+								<textField pattern="#,##0.000">
+									<reportElement mode="Opaque" x="0" y="20" width="161" height="20" backcolor="#CCCCCC" uuid="43506ade-1dbb-4907-a054-d7e64a9ab0f8"/>
+									<box>
+										<topPen lineWidth="0.5"/>
+										<bottomPen lineWidth="0.5"/>
+									</box>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font fontName="Times New Roman (AR)"/>
+									</textElement>
+									<textFieldExpression><![CDATA[$V{totalPayments}]]></textFieldExpression>
+								</textField>
+							</jr:cell>
+						</jr:groupFooter>
+						<jr:detailCell height="20" rowSpan="1">
+							<textField pattern="dd-MMM-yy">
+								<reportElement x="0" y="0" width="161" height="20" uuid="eac6ee76-698a-4e9f-94bb-771217279bbf"/>
+								<box>
+									<topPen lineWidth="0.5"/>
+									<leftPen lineWidth="0.5"/>
+									<bottomPen lineWidth="0.5"/>
+									<rightPen lineWidth="0.5"/>
+								</box>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="Times New Roman (AR)"/>
+								</textElement>
+								<textFieldExpression><![CDATA[$F{CAENTDATE}]]></textFieldExpression>
+							</textField>
+						</jr:detailCell>
+					</jr:column>
+					<jr:column width="164" uuid="444e5f26-3119-4211-8dc9-6853a12fb13d">
+						<jr:groupHeader groupName="GROUP_PAY_CUSTOMERID">
+							<jr:cell height="40" rowSpan="1">
+								<staticText>
+									<reportElement x="0" y="0" width="164" height="20" uuid="8661dcb6-69ee-482e-ae30-70e8c1e53db9"/>
+									<box>
+										<topPen lineWidth="0.5"/>
+										<leftPen lineWidth="0.0"/>
+										<bottomPen lineWidth="0.5"/>
+										<rightPen lineWidth="0.5"/>
+									</box>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font fontName="Times New Roman (AR)"/>
+									</textElement>
+									<text><![CDATA[المبلغ]]></text>
+								</staticText>
+								<staticText>
+									<reportElement x="0" y="20" width="164" height="20" uuid="1ad37cac-24bd-4b96-8143-39e02e996091"/>
+									<box>
+										<topPen lineWidth="0.5"/>
+										<leftPen lineWidth="0.0"/>
+										<bottomPen lineWidth="0.5"/>
+										<rightPen lineWidth="0.5"/>
+									</box>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font fontName="Times New Roman (AR)"/>
+									</textElement>
+									<text><![CDATA[Amount]]></text>
+								</staticText>
+							</jr:cell>
+						</jr:groupHeader>
+						<jr:groupFooter groupName="GROUP_PAY_CUSTOMERID">
+							<jr:cell height="40" rowSpan="1">
+								<staticText>
+									<reportElement mode="Opaque" x="0" y="20" width="164" height="20" backcolor="#CCCCCC" uuid="db640a7a-bff1-465b-9f31-4727d6699bc3"/>
+									<box>
+										<topPen lineWidth="0.5"/>
+										<bottomPen lineWidth="0.5"/>
+										<rightPen lineWidth="0.5"/>
+									</box>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font fontName="Times New Roman (AR)" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+									</textElement>
+									<text><![CDATA[جمالي المدفوعات]]></text>
+								</staticText>
+							</jr:cell>
+						</jr:groupFooter>
+						<jr:detailCell height="20" rowSpan="1">
+							<textField pattern="#,##0.000">
+								<reportElement x="0" y="0" width="164" height="20" uuid="8ed386a1-2dee-4d08-b987-4488d9eebbd8"/>
+								<box rightPadding="2">
+									<topPen lineWidth="0.5"/>
+									<leftPen lineWidth="0.5"/>
+									<bottomPen lineWidth="0.5"/>
+									<rightPen lineWidth="0.5"/>
+								</box>
+								<textElement textAlignment="Right" verticalAlignment="Middle">
+									<font fontName="Times New Roman (AR)"/>
+								</textElement>
+								<textFieldExpression><![CDATA[$F{CACHKAMT_GL}]]></textFieldExpression>
+							</textField>
+						</jr:detailCell>
+					</jr:column>
+				</jr:table>
+			</componentElement>
+			<staticText>
+				<reportElement mode="Opaque" x="36" y="0" width="486" height="20" backcolor="#CCCCCC" uuid="9b78a14a-6527-4f53-9a98-6322171c7970"/>
+				<box>
+					<pen lineWidth="1.0"/>
+					<topPen lineWidth="1.0"/>
+					<leftPen lineWidth="1.0"/>
+					<bottomPen lineWidth="1.0"/>
+					<rightPen lineWidth="1.0"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle" markup="none">
+					<font fontName="Times New Roman (AR)" isBold="false" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<text><![CDATA[Payments            المدفوعات]]></text>
+			</staticText>
+		</band>
+		<band height="54">
+			<componentElement>
+				<reportElement key="table" x="36" y="34" width="486" height="20" uuid="f7253cc2-09a3-4050-a387-c78b0feb993d"/>
+				<jr:table xmlns:jr="http://jasperreports.sourceforge.net/jasperreports/components" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/components http://jasperreports.sourceforge.net/xsd/components.xsd">
+					<datasetRun subDataset="DS_OUTSTAND_BAL" uuid="8a36063a-1bea-4600-b739-7b0c427fe198">
+						<datasetParameter name="customerId">
+							<datasetParameterExpression><![CDATA[$F{CUSTOMER_ID}.toString()]]></datasetParameterExpression>
+						</datasetParameter>
+						<datasetParameter name="terminationFee">
+							<datasetParameterExpression><![CDATA[$P{terminationFee}]]></datasetParameterExpression>
+						</datasetParameter>
+						<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+					</datasetRun>
+					<jr:column width="487" uuid="4b0ea31e-d657-40be-bd8b-85268643b8c8">
+						<jr:detailCell height="20" rowSpan="1">
+							<textField pattern="#,##0.000">
+								<reportElement mode="Opaque" x="161" y="0" width="161" height="20" backcolor="#CCCCCC" uuid="0c20233d-79f4-4baf-9d57-81e5b8e5a4ea"/>
+								<box>
+									<topPen lineWidth="0.5"/>
+									<bottomPen lineWidth="0.5"/>
+								</box>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="Times New Roman (AR)"/>
+								</textElement>
+								<textFieldExpression><![CDATA[$F{TOTALOUTSTANDBAL}]]></textFieldExpression>
+							</textField>
+							<staticText>
+								<reportElement mode="Opaque" x="0" y="0" width="161" height="20" backcolor="#CCCCCC" uuid="2b10c1a4-5bbb-4053-ab46-0532a0608e9b"/>
+								<box leftPadding="45">
+									<topPen lineWidth="0.5"/>
+									<leftPen lineWidth="0.5"/>
+									<bottomPen lineWidth="0.5"/>
+								</box>
+								<textElement verticalAlignment="Middle">
+									<font fontName="Times New Roman (AR)"/>
+								</textElement>
+								<text><![CDATA[Total Amount Outstanding]]></text>
+							</staticText>
+							<staticText>
+								<reportElement mode="Opaque" x="322" y="0" width="165" height="20" backcolor="#CCCCCC" uuid="5dcbb3d9-b231-41c0-9265-9d20d694e9a1"/>
+								<box rightPadding="45">
+									<topPen lineWidth="0.5"/>
+									<bottomPen lineWidth="0.5"/>
+									<rightPen lineWidth="0.5"/>
+								</box>
+								<textElement textAlignment="Right" verticalAlignment="Middle">
+									<font fontName="Times New Roman (AR)" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<text><![CDATA[اجمالي المبلغ المستحق]]></text>
+							</staticText>
+						</jr:detailCell>
+					</jr:column>
+				</jr:table>
+			</componentElement>
+			<staticText>
+				<reportElement mode="Opaque" x="36" y="0" width="162" height="20" backcolor="#CCCCCC" uuid="cfd05aa9-ec48-4cfd-9f7e-360f3f8e9ec6"/>
+				<box leftPadding="45">
+					<pen lineWidth="1.0"/>
+					<topPen lineWidth="0.5"/>
+					<leftPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.0"/>
+				</box>
+				<textElement verticalAlignment="Middle" markup="none">
+					<font fontName="Times New Roman (AR)" isBold="false" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<text><![CDATA[Termination Fee]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="360" y="0" width="162" height="20" backcolor="#CCCCCC" uuid="3498b4ee-ffdf-4d05-91a8-b702b7cc56ea"/>
+				<box rightPadding="45">
+					<pen lineWidth="1.0"/>
+					<topPen lineWidth="0.5"/>
+					<leftPen lineWidth="0.0"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement textAlignment="Right" verticalAlignment="Middle" markup="none">
+					<font fontName="Times New Roman (AR)" isBold="false" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<text><![CDATA[رسوم الغاء]]></text>
+			</staticText>
+			<textField pattern="#,##0.000">
+				<reportElement mode="Opaque" x="198" y="0" width="162" height="20" backcolor="#CCCCCC" uuid="76223be9-c1c6-4974-a817-43da906a3d2d"/>
+				<box>
+					<topPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.5"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="Times New Roman (AR)"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{terminationFee}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+	<columnFooter>
+		<band height="16" splitType="Stretch"/>
+	</columnFooter>
+	<pageFooter>
+		<band height="20" splitType="Stretch">
+			<textField>
+				<reportElement x="402" y="0" width="80" height="20" uuid="e5f55cb0-35dd-405b-9525-504a3dd50323"/>
+				<textElement textAlignment="Right">
+					<font fontName="Times New Roman (AR)"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Page "+$V{PAGE_NUMBER}+" of"]]></textFieldExpression>
+			</textField>
+			<textField evaluationTime="Report">
+				<reportElement x="482" y="0" width="40" height="20" uuid="901cd606-ccc3-4f87-a840-23a58c711a3d"/>
+				<textElement>
+					<font fontName="Times New Roman (AR)"/>
+				</textElement>
+				<textFieldExpression><![CDATA[" " + $V{PAGE_NUMBER}]]></textFieldExpression>
+			</textField>
+		</band>
+	</pageFooter>
+	<summary>
+		<band height="42" splitType="Stretch"/>
+	</summary>
+</jasperReport>
