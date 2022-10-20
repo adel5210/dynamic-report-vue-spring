@@ -27,7 +27,7 @@
 <!--        </b-navbar-nav>-->
       </b-navbar-nav>
       <b-navbar-nav class="ml-auto">
-        <b-nav-item right>Welcome, {{ currentUser.username }}</b-nav-item>
+        <b-nav-item right>Welcome, {{ currentUser ? currentUser.username : '' }}</b-nav-item>
 <!--        <b-nav-item @click="onLogout" right>Logout</b-nav-item>-->
         <b-button @click="onLogout" variant="danger">Logout</b-button>
       </b-navbar-nav>
@@ -54,9 +54,6 @@ export default {
   },
   emits: ['customerResults', 'reportSelection'],
   methods: {
-    hide() {
-
-    },
     onSearchSubmit(event) {
       event.preventDefault();
       let data = {
@@ -73,7 +70,7 @@ export default {
     },
     onLogout() {
       this.$store.dispatch('auth/logout', this.user).then(() => {
-        this.$router.push('login');
+        this.$router.push('login')
       }, error => {
         this.message = (error.response && error.response.data) || error.message || error.toString();
       });

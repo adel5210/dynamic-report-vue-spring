@@ -148,7 +148,6 @@ export default {
       })
     },
     printReport(){
-      console.log("printing report...");
       this.$refs.pdfComponent.forEach(p=>p.print(149));
     }
   },

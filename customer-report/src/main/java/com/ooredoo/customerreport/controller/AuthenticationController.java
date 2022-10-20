@@ -1,6 +1,6 @@
 package com.ooredoo.customerreport.controller;
 
-import com.ooredoo.customerreport.config.JwtTokenUtil;
+import com.ooredoo.customerreport.service.JwtTokenUtil;
 import com.ooredoo.customerreport.model.JwtRequest;
 import com.ooredoo.customerreport.model.JwtResponse;
 import com.ooredoo.customerreport.model.User;

@@ -1,33 +1,35 @@
 import http from "../http-common";
-import authService from "./auth-service"
+import authHeader from "@/services/auth-header";
 
 const KEY_TOKEN_PROP = 'user';
 const user = JSON.parse(localStorage.getItem(KEY_TOKEN_PROP));
 
 class CustomerReportDataService {
-    login(data){
-        return authService.login(data);
-    }
-
-    logout(data){
-        return authService.logout(data);
-    }
 
     fetchReportList(){
-        return http.get("/report/lists");
+        return http.get("/report/lists", {
+            headers: authHeader()
+        });
     }
 
     fetchReportParams(data){
-        return http.post("/report/params/ui", data);
+        return http.post("/report/params/ui", data, {
+            headers: authHeader()
+        });
     }
 
     searchCustomer(data){
-        return http.post("/customers", data);
+        return http.post("/customers", data, {
+            headers: authHeader()
+        });
     }
 
     generateReport(data){
         return http.post("/report/generate", data, {
-            responseType: "blob"
+            responseType: "blob",
+            headers:{
+                Authorization: 'Bearer ' + user.accessToken
+            }
         });
     }
 
@@ -41,10 +43,6 @@ class CustomerReportDataService {
             },
             onUploadProgress
         });
-    }
-
-    getFiles() {
-        return http.get("/files");
     }
 
 }

@@ -1,4 +1,4 @@
-package com.ooredoo.customerreport.config;
+package com.ooredoo.customerreport.service;
 
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;

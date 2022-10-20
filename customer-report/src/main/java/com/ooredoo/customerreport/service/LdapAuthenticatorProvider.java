@@ -1,4 +1,4 @@
-package com.ooredoo.customerreport.config;
+package com.ooredoo.customerreport.service;
 
 import com.ooredoo.customerreport.config.LdapConfig;
 import com.ooredoo.customerreport.model.LdapRequest;
